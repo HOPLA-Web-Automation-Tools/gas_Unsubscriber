@@ -1,15 +1,13 @@
 
 var scriptName = "Unsubscriber"
 var userProperties = PropertiesService.getUserProperties();
-var label_subscriptions = userProperties.getProperty("label_subscriptions") || "Subscriptions",
-    label_unsubcribe = userProperties.getProperty("label_unsubcribe") || "Unsubscribe",    
+var label_unsubcribe = userProperties.getProperty("label_unsubcribe") || "Unsubscribe",    
     frequency = userProperties.getProperty("frequency") || 1,
-    status = userProperties.getProperty("status") || 'false';
+    status = userProperties.getProperty("status") || 'disabled';
 
 var SubscriptionThreads = []
 var user_email = Session.getEffectiveUser().getEmail();
-function test(){
-   markSubscription();
+function test(){   
    Gmail_Unsubscribe();
 }
 
@@ -17,12 +15,10 @@ function doGet(e){
   if (e.parameter.setup){ //SETUP    
     deleteAllTriggers()
     
-    ScriptApp.newTrigger("markSubscription").timeBased().everyMinutes(5).create();
     ScriptApp.newTrigger("Gmail_Unsubscribe").timeBased().atHour(frequency).everyDays(1).create();
     var content = "<p>"+scriptName+" has been installed on your email " + user_email + ". "
     +'<p>It will:</p>'
-    +'<ul style="list-style-type:disc">'
-    +'<li>Move incoming emails with unsubscribe link from inbox to "Subscriptions" label.</li>'
+    +'<ul style="list-style-type:disc">'    
     +'<li>Unsubcribe to newsletters under "Unsubscribe" label. </li>'
     +'</ul>'
     +'<p>You can change these settings by clicking the WAT Suite extension icon or WAT Settings on gmail.</p>';
@@ -37,57 +33,50 @@ function doGet(e){
     var authInfo = ScriptApp.getAuthorizationInfo(ScriptApp.AuthMode.FULL)
    return HtmlService.createHtmlOutput(authInfo.getAuthorizationStatus());   
   }
-  else if (e.parameter.savesettings){ //SET VARIABLES
-    userProperties.setProperty("label_subscriptions", e.parameter.label_subscriptions || label_subscriptions);
+  else if (e.parameter.savesettings){ //SET VARIABLES    
     userProperties.setProperty("label_unsubcribe", e.parameter.label_unsubcribe || label_unsubcribe);
     userProperties.setProperty("frequency", (e.parameter.frequency) || frequency);   
-    userProperties.setProperty("status",e.parameter.status);
+    userProperties.setProperty("status",e.parameter.status);    
     
-    label_subscriptions = userProperties.getProperty("label_subscriptions") || "Subscriptions";
     label_unsubcribe = userProperties.getProperty("label_unsubcribe") || "Unsubscribe";
     frequency = userProperties.getProperty("frequency") || 1;
     
     deleteAllTriggers()
     
-    if (e.parameter.status == "true"){
-      ScriptApp.newTrigger("markSubscription").timeBased().everyMinutes(5).create();
+    if (e.parameter.status == "enabled"){      
       ScriptApp.newTrigger("Gmail_Unsubscribe").timeBased().atHour(frequency).everyDays(1).create();
     }
     return ContentService.createTextOutput("settings has been saved.");
     
   }
-  else if (e.parameter.unsubscribe_trigger){ //DO IT NOW
-    var labeled = markSubscription();
+  else if (e.parameter.unsubscribe_trigger){ //DO IT NOW    
     var unsubscribed = Gmail_Unsubscribe();
-    return ContentService.createTextOutput(labeled + " has been labeled as subscription and "+unsubscribed+" unsubscribed.");
+    return ContentService.createTextOutput(unsubscribed+" unsubscribed.");
   }
   else if (e.parameter.unsubscribe_enable){ //ENABLE
-    userProperties.setProperty("status","true");
-    deleteAllTriggers();
-    ScriptApp.newTrigger("markSubscription").timeBased().everyMinutes(5).create();
+    userProperties.setProperty("status","enabled");
+    deleteAllTriggers();    
     ScriptApp.newTrigger("Gmail_Unsubscribe").timeBased().atHour(frequency).everyDays(1).create();
 
     return ContentService.createTextOutput("Triggers has been enabled.");
   }
   else if (e.parameter.unsubscribe_disable){ //DISABLE
-    userProperties.setProperty("status","false");
+    userProperties.setProperty("status","disabled");
     deleteAllTriggers()
     return ContentService.createTextOutput("Triggers has been disabled.");
   }
-  else if (e.parameter.unsubscribe_getVariables){ //GET VARIABLES
-    var label_subscriptions = userProperties.getProperty("label_subscriptions") || "Subscriptions";
-    label_unsubcribe = userProperties.getProperty("label_unsubcribe") || "Unsubscribe";
+  else if (e.parameter.unsubscribe_getVariables){ //GET VARIABLES    
+    var label_unsubcribe = userProperties.getProperty("label_unsubcribe") || "Unsubscribe";
     frequency = userProperties.getProperty("frequency") || 1;
-    status = userProperties.getProperty("status") || 'true';
+    status = userProperties.getProperty("status") || 'enabled';
     var triggers = ScriptApp.getProjectTriggers();
     var status;
     if (triggers.length != 2){
-      status = 'false';
+      status = 'disabled';
     }else{
-      status = 'true';
+      status = 'enabled';
     }
-    resjson = {
-      'label_subscriptions': label_subscriptions,
+    resjson = {      
       'label_unsubcribe': label_unsubcribe,
       'frequency': frequency,
       'status':status
@@ -116,14 +105,12 @@ function doGet(e){
     
     var content = "<p>"+scriptName+" has been installed on your email " + user_email + ". "
     +'<p>It will:</p>'
-    +'<ul style="list-style-type:disc">'
-    +'<li>Move incoming emails with unsubscribe link from inbox to "Subscriptions" label.</li>'
+    +'<ul style="list-style-type:disc">'    
     +'<li>Unsubcribe to newsletters under "Unsubscribe" label. </li>'
     +'</ul>'
     +'<p>You can change these settings by clicking the WAT Suite extension icon or WAT Settings on gmail.</p>';
 
-
-    ScriptApp.newTrigger("markSubscription").timeBased().everyMinutes(5).create();
+    
     ScriptApp.newTrigger("Gmail_Unsubscribe").timeBased().atHour(frequency).everyDays(1).create();    
     
     var HTMLOutput = HtmlService.createHtmlOutput();
@@ -151,53 +138,6 @@ function deleteAllTriggers(){
 
 
 
-
-
-function markSubscription(){
-  var maxTime = 1500;
-  var label_subscriptions = userProperties.getProperty("label_subscriptions") || "Subscriptions";
-  var label_unsubcribe = userProperties.getProperty("label_unsubcribe") || "Unsubscribe";
-  Logger.log("markSubscription started for " + user_email);
-  d = new Date();
-  Logger.log("maxTime="+maxTime);
-  Logger.log("NOW="+d.getTime()/1000);  
-  n = ((d.getTime()/1000) - (maxTime * 60));
-  n = n.toFixed();
-  Logger.log("n = " + n);
- var filters = [
-   'in:inbox',
-    'after:' + n
-  ];
-
-  var threads = GmailApp.search(filters.join(' ')),
-      threadMessages = GmailApp.getMessagesForThreads(threads);
-  
-  
-  var count_pass = 0,count_fail=0;
-  for (var i = 0 ; i < threadMessages.length; i++) {
-    var lastMessage = threadMessages[i][threadMessages[i].length -1],
-        lastFrom = lastMessage.getFrom(),
-        body = lastMessage.getRawContent(),
-        subject = lastMessage.getSubject(),
-        thread = lastMessage.getThread();  
-        Logger.log(subject)
-    // Logger.log("lastFrom: " + lastFrom)
-    //Logger.log("!isMe:"+!isMe(lastFrom)+"|!threadInSubscriptions:"+!threadHasLabel(thread,label_subscriptions)+"|!threadInUnsubscribe:"+!threadHasLabel(thread,label_unsubcribe)+"|regex:"+regex_subscription(body,subject));
-    if (regex_subscription(body,subject) ){
-      count_pass += 1;
-      SubscriptionThreads.push(thread);
-    }else{
-      count_fail += 1;      
-    }
-  }
-  Logger.log("Subscriptions=" + count_pass + " Not-Subscriptions:" + count_fail);
-  
-  // Mark unresponded in bulk.
-  markLabel(SubscriptionThreads);
-  archive(SubscriptionThreads);
-  Logger.log('Labeled ' + SubscriptionThreads.length + ' threads as subscriptions.');
-  return SubscriptionThreads.length;
-}
 
 
 function Gmail_Unsubscribe() {
