@@ -2,26 +2,28 @@
 var scriptName = "Unsubscriber"
 var userProperties = PropertiesService.getUserProperties();
 var label_unsubcribe = userProperties.getProperty("label_unsubcribe") || "Unsubscribe",    
-    frequency = userProperties.getProperty("frequency") || 1,
+    frequency = userProperties.getProperty("frequency") || 10,
     status = userProperties.getProperty("status") || 'disabled';
 
 var SubscriptionThreads = []
 var user_email = Session.getEffectiveUser().getEmail();
 function test(){   
-   Gmail_Unsubscribe();
+//   Gmail_Unsubscribe();
+  ScriptApp.newTrigger("Gmail_Unsubscribe").timeBased().everyMinutes(frequency).create();
 }
 
 function doGet(e){
   if (e.parameter.setup){ //SETUP    
     deleteAllTriggers()
     
-    ScriptApp.newTrigger("Gmail_Unsubscribe").timeBased().atHour(frequency).everyDays(1).create();
+//    ScriptApp.newTrigger("Gmail_Unsubscribe").timeBased().atHour(frequency).create();
+    ScriptApp.newTrigger("Gmail_Unsubscribe").timeBased().everyMinutes(frequency).create();
     var content = "<p>"+scriptName+" has been installed on your email " + user_email + ". "
     +'<p>It will:</p>'
     +'<ul style="list-style-type:disc">'    
     +'<li>Unsubcribe to newsletters under "Unsubscribe" label. </li>'
     +'</ul>'
-    +'<p>You can change these settings by clicking the WAT Suite extension icon or WAT Settings on gmail.</p>';
+    +'<p>You can change these settings by clicking the HOPLA Tools extension icon or HOPLA Tools Settings on gmail.</p>';
 
 
 
@@ -39,12 +41,13 @@ function doGet(e){
     userProperties.setProperty("status",e.parameter.status);    
     
     label_unsubcribe = userProperties.getProperty("label_unsubcribe") || "Unsubscribe";
-    frequency = userProperties.getProperty("frequency") || 1;
+    frequency = userProperties.getProperty("frequency") || 5;
     
     deleteAllTriggers()
     
     if (e.parameter.status == "enabled"){      
-      ScriptApp.newTrigger("Gmail_Unsubscribe").timeBased().atHour(frequency).everyDays(1).create();
+//      ScriptApp.newTrigger("Gmail_Unsubscribe").timeBased().atHour(frequency).create();
+      ScriptApp.newTrigger("Gmail_Unsubscribe").timeBased().everyMinutes(frequency).create();
     }
     return ContentService.createTextOutput("settings has been saved.");
     
@@ -56,7 +59,8 @@ function doGet(e){
   else if (e.parameter.unsubscribe_enable){ //ENABLE
     userProperties.setProperty("status","enabled");
     deleteAllTriggers();    
-    ScriptApp.newTrigger("Gmail_Unsubscribe").timeBased().atHour(frequency).everyDays(1).create();
+//    ScriptApp.newTrigger("Gmail_Unsubscribe").timeBased().atHour(frequency).create();
+    ScriptApp.newTrigger("Gmail_Unsubscribe").timeBased().everyMinutes(frequency).create();
 
     return ContentService.createTextOutput("Triggers has been enabled.");
   }
@@ -108,10 +112,11 @@ function doGet(e){
     +'<ul style="list-style-type:disc">'    
     +'<li>Unsubcribe to newsletters under "Unsubscribe" label. </li>'
     +'</ul>'
-    +'<p>You can change these settings by clicking the WAT Suite extension icon or WAT Settings on gmail.</p>';
+    +'<p>You can change these settings by clicking the HOPLA Tools extension icon or HOPLA Tools Settings on gmail.</p>';
 
     
-    ScriptApp.newTrigger("Gmail_Unsubscribe").timeBased().atHour(frequency).everyDays(1).create();    
+//    ScriptApp.newTrigger("Gmail_Unsubscribe").timeBased().atHour(frequency).create();    
+    ScriptApp.newTrigger("Gmail_Unsubscribe").timeBased().everyMinutes(frequency).create();
     
     var HTMLOutput = HtmlService.createHtmlOutput();
     HTMLOutput.append(style);
@@ -125,6 +130,17 @@ function doGet(e){
 
 }
 
+function markSubscription(){
+  deleteTriggerByName('markSubscription');
+}
+function deleteTriggerByName(p){
+  var triggers = ScriptApp.getProjectTriggers();
+  for (var i = 0; i < triggers.length; i++) {
+    if (triggers[i].getHandlerFunction() == p){
+      ScriptApp.deleteTrigger(triggers[i]);
+    }
+  }
+}
 
 function deleteAllTriggers(){
   //DELETE ALL TRIGGERS
@@ -140,7 +156,7 @@ function deleteAllTriggers(){
 
 
 
-function Gmail_Unsubscribe() {
+function Gmail_Unsubscribe() {  
   var label_unsubcribe = userProperties.getProperty("label_unsubcribe") || "Unsubscribe";
   var threads = GmailApp.search("label:"+label_unsubcribe);
   var iUnsubscribed = 0;
