@@ -1,3 +1,3 @@
-# WAT - App Script - Unsubscriber #
+# HT - App Script - Unsubscriber #
 
 Auto-unsubscribes to newsletters.
