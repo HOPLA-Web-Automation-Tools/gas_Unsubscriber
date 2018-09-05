@@ -15,9 +15,7 @@ function test(){
 function doGet(e){
   if (e.parameter.setup){ //SETUP    
     deleteAllTriggers()
-    
-//    ScriptApp.newTrigger("Gmail_Unsubscribe").timeBased().atHour(frequency).create();
-    ScriptApp.newTrigger("Gmail_Unsubscribe").timeBased().everyMinutes(frequency).create();
+//    ScriptApp.newTrigger("Gmail_Unsubscribe").timeBased().everyMinutes(frequency).create();
     var content = "<p>"+scriptName+" has been installed on your email " + user_email + ". "
     +'<p>It will:</p>'
     +'<ul style="list-style-type:disc">'    
@@ -156,7 +154,7 @@ function deleteAllTriggers(){
 
 
 
-function Gmail_Unsubscribe() {  
+function Gmail_Unsubscribe() {
   var label_unsubcribe = userProperties.getProperty("label_unsubcribe") || "Unsubscribe";
   var threads = GmailApp.search("label:"+label_unsubcribe);
   var iUnsubscribed = 0;
