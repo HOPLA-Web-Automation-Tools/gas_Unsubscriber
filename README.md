@@ -1,3 +1,3 @@
 # HT - App Script - Unsubscriber #
 
-Auto-unsubscribes to newsletters.
+Auto-unsubscribes to newsletters under a specified label.
