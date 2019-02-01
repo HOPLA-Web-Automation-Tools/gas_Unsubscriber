@@ -7,12 +7,25 @@ var status = userProperties.getProperty("status") || 'disabled';
 var SubscriptionThreads = [];
 var user_email = Session.getEffectiveUser().getEmail();
 
+global.doGet = doGet;
+global.test = test;
+global.markSubscription = markSubscription;
+global.deleteTriggerByName = deleteTriggerByName;
+global.deleteAllTriggers = deleteAllTriggers;
+global.Gmail_Unsubscribe = Gmail_Unsubscribe;
+global.regex_subscription = regex_subscription;
+global.markLabel = markLabel;
+global.archive = archive;
+global.threadHasLabel = global.threadHasLabel;
+global.isMe = isMe;
+global.getEmailAddresses = getEmailAddresses;
+global.getLabel = getLabel;
+
+
 function test() {
   //   Gmail_Unsubscribe();
   ScriptApp.newTrigger("Gmail_Unsubscribe").timeBased().everyMinutes(frequency).create();
 }
-
-global.doGet = doGet;
 
 function doGet(e) {
   if (e.parameter.setup) { // SETUP
