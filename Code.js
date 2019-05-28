@@ -43,18 +43,20 @@ function doGet(e) {
     var authInfo = ScriptApp.getAuthorizationInfo(ScriptApp.AuthMode.FULL);
     return HtmlService.createHtmlOutput("Status: " + authInfo.getAuthorizationStatus());
   } else if (e.parameter.savesettings) { // SET VARIABLES
-    userProperties.setProperty("label_unsubcribe", e.parameter.label_unsubcribe || label_unsubcribe);
-    userProperties.setProperty("frequency", (e.parameter.frequency) || frequency);
-    userProperties.setProperty("status", e.parameter.status);
+    var oSave = JSON.parse(e.parameter.savesettings);
+    userProperties.setProperty("label_unsubcribe", oSave.label_unsubcribe || label_unsubcribe);
+    userProperties.setProperty("frequency", (oSave.frequency) || frequency);
+    userProperties.setProperty("status", oSave.status);
 
     label_unsubcribe = userProperties.getProperty("label_unsubcribe") || "Unsubscribe";
     frequency = userProperties.getProperty("frequency") || 5;
+    frequency = parseInt(frequency, 10);
 
     deleteAllTriggers();
 
-    if (e.parameter.status === "enabled") {
-      //      ScriptApp.newTrigger("Gmail_Unsubscribe").timeBased().atHour(frequency).create();
-      ScriptApp.newTrigger("Gmail_Unsubscribe").timeBased().everyMinutes(frequency).create();
+    if (oSave.status === "enabled") {
+      ScriptApp.newTrigger("Gmail_Unsubscribe").timeBased().atHour(frequency).everyDays(1).create();
+      // ScriptApp.newTrigger("Gmail_Unsubscribe").timeBased().everyMinutes(frequency).create();
     }
     return ContentService.createTextOutput("settings has been saved.");
   } else if (e.parameter.unsubscribe_trigger) { // DO IT NOW
@@ -63,8 +65,8 @@ function doGet(e) {
   } else if (e.parameter.unsubscribe_enable) { // ENABLE
     userProperties.setProperty("status", "enabled");
     deleteAllTriggers();
-    //    ScriptApp.newTrigger("Gmail_Unsubscribe").timeBased().atHour(frequency).create();
-    ScriptApp.newTrigger("Gmail_Unsubscribe").timeBased().everyMinutes(frequency).create();
+    ScriptApp.newTrigger("Gmail_Unsubscribe").timeBased().atHour(frequency).everyDays(1).create();
+    // ScriptApp.newTrigger("Gmail_Unsubscribe").timeBased().everyMinutes(frequency).create();
 
     return ContentService.createTextOutput("Triggers has been enabled.");
   } else if (e.parameter.unsubscribe_disable) { // DISABLE
@@ -74,14 +76,11 @@ function doGet(e) {
   } else if (e.parameter.unsubscribe_getVariables) { // GET VARIABLES
     var label_unsubcribe = userProperties.getProperty("label_unsubcribe") || "Unsubscribe";
     frequency = userProperties.getProperty("frequency") || 1;
-    status = userProperties.getProperty("status") || 'enabled';
+    // status = userProperties.getProperty("status") || 'enabled';
     var triggers = ScriptApp.getProjectTriggers();
-    var status;
-    if (triggers.length !== 2) {
-      status = 'disabled';
-    } else {
-      status = 'enabled';
-    }
+    var status = triggers.length > 0 ? 'enabled' : 'disabled';
+
+    frequency = parseInt(frequency, 10);
     var resjson = {
       'label_unsubcribe': label_unsubcribe,
       'frequency': frequency,
@@ -109,15 +108,15 @@ function doGet(e) {
     deleteAllTriggers();
 
     var content = "<p>" + scriptName + " has been installed on your email " + user_email + ". "
-+ '<p>It will:</p>'
-+ '<ul style="list-style-type:disc">'
-+ '<li>Unsubcribe to newsletters under "Unsubscribe" label. </li>'
-+ '</ul>'
-+ '<p>You can change these settings by clicking the HOPLA Tools extension icon or HOPLA Tools Settings on gmail.</p>';
+    + '<p>It will:</p>'
+    + '<ul style="list-style-type:disc">'
+    + '<li>Unsubcribe to newsletters under "Unsubscribe" label. </li>'
+    + '</ul>'
+    + '<p>You can change these settings by clicking the HOPLA Tools extension icon or HOPLA Tools Settings on gmail.</p>';
 
 
-    //    ScriptApp.newTrigger("Gmail_Unsubscribe").timeBased().atHour(frequency).create();
-    ScriptApp.newTrigger("Gmail_Unsubscribe").timeBased().everyMinutes(frequency).create();
+    ScriptApp.newTrigger("Gmail_Unsubscribe").timeBased().atHour(frequency).everyDays(1).create();
+    // ScriptApp.newTrigger("Gmail_Unsubscribe").timeBased().everyMinutes(frequency).create();
 
     var HTMLOutput = HtmlService.createHtmlOutput();
     HTMLOutput.append(style);
